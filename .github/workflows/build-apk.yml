@@ -5,6 +5,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-android-apk:
     runs-on: ubuntu-latest
@@ -88,6 +91,7 @@ jobs:
           name: KEEP-PRIVATE-release-keystore
           path: my-upload-key.jks
           if-no-files-found: ignore
+
       - name: Publish Direct APK to GitHub Releases (No ZIP needed)
         uses: softprops/action-gh-release@v2
         with:
