@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">G-Book Camera</string>
+    <string name="notif_gate_title">Allow G-Book Camera to send you notifications?</string>
+    <string name="notif_gate_allow">Allow</string>
+    <string name="notif_channel_name">G-Book Camera Reminders</string>
+    <string name="notif_daily_title">G-Book Camera</string>
+    <string name="notif_daily_body">Try G-Book Camera for iPhone-like Videos &amp; Photos!</string>
+    <string name="welcome_greeting">Welcome from Malik Ghous Khokhar</string>
+    <string name="welcome_action_editing">Editing</string>
+    <string name="banner_offline">Connect to Internet</string>
+    <string name="banner_online">Connected</string>
+    <string name="studio_export">Export</string>
+    <string name="studio_upload">Upload from Gallery</string>
+    <string name="studio_hold_compare">Hold to Compare (Before / After)</string>
+</resources>

@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="42%" r="65%">
+      <stop offset="0%" stop-color="#0D1F4B" />
+      <stop offset="60%" stop-color="#071028" />
+      <stop offset="100%" stop-color="#050B1B" />
+    </radialGradient>
+    <linearGradient id="goldRim" x1="12%" y1="10%" x2="88%" y2="90%">
+      <stop offset="0%" stop-color="#FFE7A3" />
+      <stop offset="28%" stop-color="#C99E4E" />
+      <stop offset="55%" stop-color="#2E3B56" />
+      <stop offset="82%" stop-color="#F5D37E" />
+      <stop offset="100%" stop-color="#785E2B" />
+    </linearGradient>
+    <linearGradient id="titaniumRing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#606A7E" />
+      <stop offset="45%" stop-color="#1E2534" />
+      <stop offset="100%" stop-color="#48536B" />
+    </linearGradient>
+    <radialGradient id="sapphireLens" cx="42%" cy="38%" r="58%">
+      <stop offset="0%" stop-color="#4CC9FF" />
+      <stop offset="32%" stop-color="#1D6BFF" />
+      <stop offset="68%" stop-color="#0A256E" />
+      <stop offset="100%" stop-color="#040D2A" />
+    </radialGradient>
+    <radialGradient id="lensCore" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#020817" />
+      <stop offset="65%" stop-color="#0A2D82" />
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0.7" />
+    </radialGradient>
+  </defs>
+
+  <rect width="1024" height="1024" rx="224" fill="url(#bgGrad)" />
+
+  <!-- Subtle outer ambient sapphire aura -->
+  <circle cx="512" cy="512" r="395" fill="none" stroke="#2563EB" stroke-opacity="0.22" stroke-width="18" />
+
+  <!-- Golden chamfered outer rim -->
+  <circle cx="512" cy="512" r="356" fill="url(#goldRim)" />
+
+  <!-- Brushed dark titanium lens barrel -->
+  <circle cx="512" cy="512" r="342" fill="url(#titaniumRing)" />
+  <circle cx="512" cy="512" r="300" fill="#070D1D" stroke="#0F172A" stroke-width="6" />
+
+  <!-- Multi-coated sapphire glass -->
+  <circle cx="512" cy="512" r="276" fill="url(#sapphireLens)" />
+
+  <!-- 7-blade precision aperture geometry -->
+  <g stroke="#60A5FA" stroke-opacity="0.55" stroke-width="4" fill="#061645" fill-opacity="0.45">
+    <path d="M512,236 L655,375 L550,430 Z" />
+    <path d="M726,340 L735,530 L598,492 Z" />
+    <path d="M750,595 L615,738 L565,595 Z" />
+    <path d="M590,778 L405,748 L480,620 Z" />
+    <path d="M352,732 L252,575 L410,565 Z" />
+    <path d="M242,505 L322,330 L432,462 Z" />
+    <path d="M362,282 L512,236 L478,415 Z" />
+  </g>
+
+  <!-- Inner optical elements -->
+  <circle cx="512" cy="512" r="145" fill="none" stroke="#38BDF8" stroke-opacity="0.45" stroke-width="3" />
+  <circle cx="512" cy="512" r="96" fill="url(#lensCore)" stroke="#93C5FD" stroke-opacity="0.6" stroke-width="3" />
+
+  <!-- Specular optical reflections -->
+  <ellipse cx="425" cy="390" rx="68" ry="34" transform="rotate(-32 425 390)" fill="#E0F2FE" fill-opacity="0.42" />
+  <ellipse cx="605" cy="615" rx="34" ry="18" transform="rotate(-32 605 615)" fill="#FDE68A" fill-opacity="0.35" />
+  <circle cx="474" cy="474" r="18" fill="#FFFFFF" fill-opacity="0.65" />
+</svg>

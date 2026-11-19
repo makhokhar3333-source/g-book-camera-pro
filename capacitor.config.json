@@ -1,0 +1,19 @@
+{
+  "appId": "com.gbookcamera.app",
+  "appName": "G-Book Camera",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#060B19"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_notification_camera",
+      "iconColor": "#1D6BFF"
+    },
+    "AdMob": {
+      "appId": "ca-app-pub-1069125783691383~1918252053"
+    }
+  }
+}

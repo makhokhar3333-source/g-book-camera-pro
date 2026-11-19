@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#060B19" />
+  <title>G-Book Camera</title>
+  <style>
+    :root {
+      --bg-black: #000000;
+      --ocean-top: #060B19;
+      --ocean-bottom: #0D1B3E;
+      --studio-bg: #080E1E;
+      --surface: #0F1830;
+      --surface-elevated: #162242;
+      --border: #22335C;
+      --sapphire: #1D6BFF;
+      --sapphire-bright: #38BDF8;
+      --gold: #F5D37E;
+      --green: #22C55E;
+      --green-dark: #16A34A;
+      --red: #DC2626;
+      --text: #F8FAFC;
+      --muted: #94A3B8;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      background: #000000; color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Plus Jakarta Sans", "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+    }
+
+    .screen {
+      position: fixed; inset: 0;
+      display: none; flex-direction: column;
+      opacity: 0; transition: opacity 0.28s ease;
+    }
+    .screen.active { display: flex; opacity: 1; }
+
+    /* 1. NOTIFICATION GATE (Pure Black TikTok-Style Card) */
+    #screen-gate {
+      background: #000000;
+      align-items: center; justify-content: center;
+      padding: calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
+    }
+    .gate-card {
+      width: 100%; max-width: 400px;
+      background: #000000;
+      border: 1px solid #1F2937;
+      border-radius: 28px;
+      padding: 36px 28px;
+      text-align: center;
+      box-shadow: 0 24px 64px rgba(29, 107, 255, 0.25);
+    }
+    .gate-icon-wrap {
+      width: 72px; height: 72px; margin: 0 auto 24px;
+      border-radius: 20px; overflow: hidden;
+      border: 1.5px solid rgba(56, 189, 248, 0.45);
+      box-shadow: 0 0 32px rgba(29, 107, 255, 0.45);
+    }
+    .gate-icon-wrap img, .welcome-icon img, .topbar-icon img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .gate-title {
+      color: #FFFFFF;
+      font-size: 21px; font-weight: 800; line-height: 1.38;
+      margin: 0 0 28px; letter-spacing: -0.02em;
+    }
+    .btn-allow {
+      width: 100%; height: 56px; border: none; border-radius: 18px;
+      background: linear-gradient(90deg, #1D6BFF, #0EA5E9);
+      color: #FFFFFF; font-size: 17px; font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 12px 32px rgba(14, 165, 233, 0.45);
+      transition: transform 0.14s ease, filter 0.14s ease;
+    }
+    .btn-allow:active { transform: scale(0.96); filter: brightness(1.08); }
+
+    /* 2. SCREEN 1: WELCOME SCREEN + LIVE INTERNET BANNER */
+    #screen-welcome {
+      background: linear-gradient(180deg, var(--ocean-top) 0%, #09132B 50%, var(--ocean-bottom) 100%);
+      align-items: center; justify-content: center;
+      padding: calc(28px + env(safe-area-inset-top)) 28px calc(28px + env(safe-area-inset-bottom));
+    }
+    .welcome-aura {
+      position: absolute; width: 380px; height: 380px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(29, 107, 255, 0.28) 0%, rgba(56, 189, 248, 0.08) 45%, transparent 72%);
+      top: 22%; left: 50%; transform: translate(-50%, -50%);
+      pointer-events: none; animation: auraPulse 3.4s ease-in-out infinite alternate;
+    }
+    @keyframes auraPulse {
+      from { transform: translate(-50%, -50%) scale(0.94); }
+      to { transform: translate(-50%, -50%) scale(1.06); }
+    }
+    .conn-banner {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 60;
+      padding: calc(12px + env(safe-area-inset-top)) 20px 14px;
+      display: none; align-items: center; justify-content: center; gap: 10px;
+      color: #FFFFFF; font-size: 15px; font-weight: 800;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+    .conn-banner.red { display: flex; background: var(--red); }
+    .conn-banner.green { display: flex; background: var(--green-dark); }
+
+    .welcome-content {
+      position: relative; z-index: 2; width: 100%; max-width: 440px;
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+    }
+    .welcome-icon {
+      width: 144px; height: 144px; border-radius: 36px; overflow: hidden;
+      border: 1.5px solid rgba(245, 211, 126, 0.6);
+      box-shadow: 0 20px 56px rgba(29, 107, 255, 0.45);
+      margin-bottom: 32px;
+    }
+    .brand-eyebrow {
+      color: var(--sapphire-bright); font-size: 12px; font-weight: 700;
+      letter-spacing: 3px; margin-bottom: 12px;
+    }
+    .welcome-title {
+      color: #FFFFFF; font-size: 28px; font-weight: 800; line-height: 1.28;
+      margin: 0 0 12px; letter-spacing: -0.02em;
+    }
+    .welcome-sub {
+      color: var(--muted); font-size: 13px; margin: 0 0 42px;
+    }
+    .btn-editing {
+      width: 100%; max-width: 310px; height: 60px;
+      border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 22px;
+      background: linear-gradient(90deg, #1D6BFF, #0EA5E9, #38BDF8);
+      color: #FFFFFF; font-size: 18px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      cursor: pointer; box-shadow: 0 16px 40px rgba(14, 165, 233, 0.42);
+      transition: transform 0.14s ease;
+    }
+    .btn-editing:active { transform: scale(0.96); }
+
+    /* 3. SCREEN 2: IPHONE 18 PRO MAX STUDIO */
+    #screen-studio {
+      background: var(--studio-bg);
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .studio-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .topbar-icon {
+      width: 34px; height: 34px; border-radius: 10px; overflow: hidden;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .topbar-title { font-size: 18px; font-weight: 800; color: #FFFFFF; }
+    .btn-export {
+      height: 44px; padding: 0 18px; border: none; border-radius: 14px;
+      background: var(--green); color: #000000;
+      font-size: 14px; font-weight: 800; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: opacity 0.15s ease, transform 0.14s ease;
+    }
+    .btn-export:disabled { opacity: 0.28; cursor: default; }
+    .btn-export:not(:disabled):active { transform: scale(0.96); }
+
+    .preview-stage {
+      flex: 1; margin: 4px 16px 10px;
+      background: #040812; border: 1px solid rgba(34, 51, 92, 0.7);
+      border-radius: 24px; position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #gl-canvas, #source-video {
+      max-width: 100%; max-height: 100%; object-fit: contain; display: none;
+    }
+    #gl-canvas.visible { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+    .empty-state {
+      text-align: center; padding: 24px; max-width: 320px;
+    }
+    .empty-state h2 { font-size: 17px; margin: 0 0 8px; font-weight: 800; }
+    .empty-state p { font-size: 13px; color: var(--muted); margin: 0 0 22px; }
+    .btn-upload {
+      height: 52px; padding: 0 24px; border: none; border-radius: 18px;
+      background: linear-gradient(90deg, #1D6BFF, #0EA5E9);
+      color: #FFFFFF; font-size: 15px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 12px 28px rgba(14, 165, 233, 0.35);
+    }
+
+    .studio-pills {
+      position: absolute; top: 14px; left: 14px; right: 14px;
+      display: none; justify-content: space-between; align-items: center; z-index: 4;
+    }
+    .studio-pills.visible { display: flex; }
+    .pill {
+      padding: 6px 12px; border-radius: 99px;
+      background: rgba(0, 0, 0, 0.72); border: 1px solid rgba(56, 189, 248, 0.45);
+      font-size: 11px; font-weight: 700; letter-spacing: 0.4px;
+    }
+    .pill.comparing { border-color: var(--gold); color: var(--gold); }
+    .pill-change { border-color: var(--border); color: #FFFFFF; cursor: pointer; }
+
+    .studio-dock {
+      margin: 4px 18px 14px; padding: 18px 20px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 24px;
+    }
+    .dock-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+    }
+    .dock-label { font-size: 15px; font-weight: 800; }
+    .dock-sub { font-size: 11px; color: #64748B; margin-top: 2px; }
+    .dock-pct {
+      background: var(--surface-elevated); border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 10px; padding: 6px 12px;
+      color: var(--sapphire-bright); font-size: 15px; font-weight: 800;
+    }
+    input[type="range"].hdr-slider {
+      width: 100%; accent-color: var(--sapphire-bright); height: 6px; margin: 10px 0 16px;
+    }
+    .btn-compare {
+      width: 100%; height: 50px; border-radius: 16px;
+      background: var(--surface-elevated); border: 1px solid var(--border);
+      color: #FFFFFF; font-size: 14px; font-weight: 700; cursor: pointer;
+    }
+    .btn-compare.active { background: rgba(245, 211, 126, 0.2); border-color: var(--gold); color: var(--gold); }
+
+    .export-overlay {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8);
+      display: none; align-items: center; justify-content: center; z-index: 80;
+    }
+    .export-overlay.visible { display: flex; }
+    .export-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 24px; padding: 28px 32px; text-align: center; min-width: 240px;
+    }
+    .toast-pill {
+      position: fixed; top: calc(74px + env(safe-area-inset-top)); left: 50%;
+      transform: translateX(-50%); background: var(--green-dark); color: #FFFFFF;
+      padding: 10px 18px; border-radius: 99px; font-size: 13px; font-weight: 700;
+      display: none; z-index: 90;
+    }
+    .toast-pill.visible { display: block; }
+  </style>
+</head>
+<body>
+  <!-- Live Internet Check Banner -->
+  <div id="conn-banner" class="conn-banner"></div>
+
+  <!-- 1. MANDATORY NOTIFICATION GATE -->
+  <section id="screen-gate" class="screen active">
+    <div class="gate-card">
+      <div class="gate-icon-wrap">
+        <img src="assets/icon.png" alt="G-Book Camera Icon" />
+      </div>
+      <h1 class="gate-title">Allow G-Book Camera to send you notifications?</h1>
+      <button id="btn-allow-notif" class="btn-allow">Allow</button>
+    </div>
+  </section>
+
+  <!-- 2. SCREEN 1: LUXURY WELCOME SCREEN -->
+  <section id="screen-welcome" class="screen">
+    <div class="welcome-aura"></div>
+    <div class="welcome-content">
+      <div class="welcome-icon">
+        <img src="assets/icon.png" alt="G-Book Camera Emblem" />
+      </div>
+      <div class="brand-eyebrow">G-BOOK CAMERA</div>
+      <h1 class="welcome-title">Welcome from Malik Ghous Khokhar</h1>
+      <p class="welcome-sub">Smart HDR Studio • Pro Lens Clarity</p>
+      <button id="btn-editing" class="btn-editing">Editing</button>
+    </div>
+  </section>
+
+  <!-- 3. SCREEN 2: IPHONE 18 PRO MAX PHOTO & VIDEO STUDIO -->
+  <section id="screen-studio" class="screen">
+    <header class="studio-topbar">
+      <div id="btn-back-welcome" class="topbar-left">
+        <div class="topbar-icon"><img src="assets/icon.png" alt="G-Book Camera" /></div>
+        <span class="topbar-title">G-Book Camera</span>
+      </div>
+      <button id="btn-export" class="btn-export" disabled>Export</button>
+    </header>
+
+    <main class="preview-stage">
+      <div id="studio-pills" class="studio-pills">
+        <span id="pill-mode" class="pill">SMART HDR • 70%</span>
+        <span id="btn-change-media" class="pill pill-change">Change Media</span>
+      </div>
+
+      <div id="empty-state" class="empty-state">
+        <h2>iPhone 18 Pro Max Smart HDR</h2>
+        <p>Supports 50MP / 108MP photos &amp; full HD/4K videos</p>
+        <button id="btn-upload" class="btn-upload">Upload from Gallery</button>
+      </div>
+
+      <canvas id="gl-canvas"></canvas>
+      <video id="source-video" playsinline loop></video>
+      <input id="media-input" type="file" accept="image/*,video/*" style="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;" />
+    </main>
+
+    <footer class="studio-dock">
+      <div class="dock-header">
+        <div>
+          <div class="dock-label">Smart HDR Master</div>
+          <div class="dock-sub">f/1.48 Shadows • f/4.0 Skies • 48MP Clarity</div>
+        </div>
+        <div id="slider-pct" class="dock-pct">70%</div>
+      </div>
+      <input id="hdr-slider" class="hdr-slider" type="range" min="0" max="100" value="70" />
+      <button id="btn-compare" class="btn-compare">Hold to Compare (Before / After)</button>
+    </footer>
+  </section>
+
+  <div id="export-overlay" class="export-overlay">
+    <div class="export-box">
+      <div id="export-status" style="font-weight:800;font-size:15px;">Exporting Smart HDR...</div>
+      <div style="color:#94A3B8;font-size:12px;margin-top:6px;">Preserving 100% quality &amp; audio</div>
+    </div>
+  </div>
+  <div id="toast-pill" class="toast-pill">Saved to Gallery!</div>
+
+  <script>
+    const ADMOB_IDS = {
+      appId: 'ca-app-pub-1069125783691383~1918252053',
+      rewarded: 'ca-app-pub-1069125783691383/4387347779',
+      rewardedInterstitial: 'ca-app-pub-1069125783691383/3046469651',
+      interstitial: 'ca-app-pub-1069125783691383/7905586656'
+    };
+
+    const CapacitorPlugins = () => (window.Capacitor && window.Capacitor.Plugins) ? window.Capacitor.Plugins : {};
+
+    // ================================================================
+    // 1. NOTIFICATION GATE & 3X DAILY NOTIFICATIONS (08:00, 13:00, 18:00)
+    // ================================================================
+    async function scheduleDailyNotifications() {
+      const plugins = CapacitorPlugins();
+      const bodyText = 'Try G-Book Camera for iPhone-like Videos & Photos!';
+      try {
+        if (plugins.LocalNotifications) {
+          await plugins.LocalNotifications.requestPermissions();
+          const times = [{ id: 800, hour: 8, minute: 0 }, { id: 1300, hour: 13, minute: 0 }, { id: 1800, hour: 18, minute: 0 }];
+          await plugins.LocalNotifications.schedule({
+            notifications: times.map(t => ({
+              id: t.id,
+              title: 'G-Book Camera',
+              body: bodyText,
+              schedule: { on: { hour: t.hour, minute: t.minute }, repeats: true, allowWhileIdle: true }
+            }))
+          });
+        } else if ('Notification' in window && Notification.permission !== 'denied') {
+          await Notification.requestPermission().catch(() => {});
+        }
+      } catch (_) {}
+    }
+
+    document.getElementById('btn-allow-notif').addEventListener('click', async () => {
+      await scheduleDailyNotifications();
+      showScreen('screen-welcome');
+    });
+
+    // ================================================================
+    // 2. LIVE INTERNET CHECK (RED "Connect to Internet" -> GREEN "Connected" 2.5s)
+    // ================================================================
+    const connBanner = document.getElementById('conn-banner');
+    let wasOfflineShown = false;
+    let greenTimer = null;
+    let liveOnline = navigator.onLine;
+
+    async function checkLiveInternet() {
+      if (!navigator.onLine) {
+        liveOnline = false;
+        return false;
+      }
+      try {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 2200);
+        await fetch('https://clients3.google.com/generate_204', { mode: 'no-cors', cache: 'no-store', signal: ctrl.signal });
+        clearTimeout(tid);
+        liveOnline = true;
+        return true;
+      } catch (_) {
+        liveOnline = navigator.onLine;
+        return liveOnline;
+      }
+    }
+
+    function updateBannerState(online) {
+      if (!online && wasOfflineShown) {
+        clearTimeout(greenTimer);
+        connBanner.className = 'conn-banner red';
+        connBanner.textContent = 'Connect to Internet';
+      } else if (online && wasOfflineShown) {
+        wasOfflineShown = false;
+        connBanner.className = 'conn-banner green';
+        connBanner.textContent = 'Connected';
+        clearTimeout(greenTimer);
+        greenTimer = setTimeout(() => { connBanner.className = 'conn-banner'; }, 2500);
+      }
+    }
+
+    window.addEventListener('online', async () => updateBannerState(await checkLiveInternet()));
+    window.addEventListener('offline', () => { liveOnline = false; updateBannerState(false); });
+    setInterval(async () => updateBannerState(await checkLiveInternet()), 4000);
+
+    document.getElementById('btn-editing').addEventListener('click', async () => {
+      const ok = await checkLiveInternet();
+      if (!ok) {
+        wasOfflineShown = true;
+        updateBannerState(false);
+        return;
+      }
+      connBanner.className = 'conn-banner';
+      showScreen('screen-studio');
+    });
+
+    document.getElementById('btn-back-welcome').addEventListener('click', () => showScreen('screen-welcome'));
+
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    // ================================================================
+    // 3. GOOGLE ADMOB 3-TIER PRELOAD (8s RETRY) & 3s MAX EXPORT TRIGGER
+    // ================================================================
+    const adReady = { rewarded: false, rewardedInterstitial: false, interstitial: false };
+
+    async function initAdMob() {
+      const { AdMob } = CapacitorPlugins();
+      if (!AdMob) return;
+      try { await AdMob.initialize({ initializeForTesting: false }); } catch (_) {}
+      preloadAds();
+      setInterval(preloadAds, 8000);
+    }
+
+    async function preloadAds() {
+      const { AdMob } = CapacitorPlugins();
+      if (!AdMob) return;
+      if (!adReady.rewarded) {
+        try { await AdMob.prepareRewardVideoAd({ adId: ADMOB_IDS.rewarded }); adReady.rewarded = true; } catch (_) {}
+      }
+      if (!adReady.rewardedInterstitial && AdMob.prepareRewardInterstitialAd) {
+        try { await AdMob.prepareRewardInterstitialAd({ adId: ADMOB_IDS.rewardedInterstitial }); adReady.rewardedInterstitial = true; } catch (_) {}
+      }
+      if (!adReady.interstitial) {
+        try { await AdMob.prepareInterstitial({ adId: ADMOB_IDS.interstitial }); adReady.interstitial = true; } catch (_) {}
+      }
+    }
+
+    async function triggerExportAdWithTimeout() {
+      const { AdMob } = CapacitorPlugins();
+      if (!AdMob) return;
+      const runCascade = (async () => {
+        if (adReady.rewarded) {
+          adReady.rewarded = false;
+          await AdMob.showRewardVideoAd();
+          return;
+        }
+        if (adReady.rewardedInterstitial && AdMob.showRewardInterstitialAd) {
+          adReady.rewardedInterstitial = false;
+          await AdMob.showRewardInterstitialAd();
+          return;
+        }
+        if (adReady.interstitial) {
+          adReady.interstitial = false;
+          await AdMob.showInterstitial();
+          return;
+        }
+        await preloadAds();
+        if (adReady.rewarded) { adReady.rewarded = false; await AdMob.showRewardVideoAd(); }
+        else if (adReady.interstitial) { adReady.interstitial = false; await AdMob.showInterstitial(); }
+      })().catch(() => {});
+
+      await Promise.race([runCascade, new Promise(res => setTimeout(res, 3000))]);
+      preloadAds();
+    }
+
+    initAdMob();
+
+    // ================================================================
+    // 4. IPHONE 18 PRO MAX SMART HDR WEBGL2 STUDIO (PHOTO & VIDEO)
+    // ================================================================
+    const canvas = document.getElementById('gl-canvas');
+    const gl = canvas.getContext('webgl2', { preserveDrawingBuffer: true }) || canvas.getContext('webgl', { preserveDrawingBuffer: true });
+    const videoEl = document.getElementById('source-video');
+    const mediaInput = document.getElementById('media-input');
+    const slider = document.getElementById('hdr-slider');
+    const sliderPct = document.getElementById('slider-pct');
+    const pillMode = document.getElementById('pill-mode');
+    const btnExport = document.getElementById('btn-export');
+    const btnCompare = document.getElementById('btn-compare');
+
+    let mediaType = null; // 'image' | 'video'
+    let loadedBitmap = null;
+    let isComparing = false;
+    let rafId = null;
+
+    const vsSrc = `
+      attribute vec2 aPos;
+      varying vec2 vUv;
+      void main() {
+        gl_Position = vec4(aPos, 0.0, 1.0);
+        vUv = vec2(aPos.x * 0.5 + 0.5, 1.0 - (aPos.y * 0.5 + 0.5));
+      }
+    `;
+    const fsSrc = `
+      precision mediump float;
+      uniform sampler2D uTex;
+      uniform float uIntensity;
+      uniform float uCompare;
+      uniform vec2 uTexel;
+      varying vec2 vUv;
+
+      float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
+      vec3 filmic(vec3 v, float s) {
+        vec3 cl = clamp(v, 0.0, 1.25);
+        vec3 comp = cl / (1.0 + 0.14 * s * cl);
+        vec3 norm = clamp(comp * (1.0 + 0.14 * s), 0.0, 1.0);
+        vec3 sc = norm * norm * (3.0 - 2.0 * norm);
+        return clamp(mix(norm, sc, 0.16 * s), 0.0, 1.0);
+      }
+      void main() {
+        vec4 src = texture2D(uTex, vUv);
+        if (uCompare > 0.5 || uIntensity <= 0.005) { gl_FragColor = src; return; }
+        float s = clamp(uIntensity, 0.0, 1.0);
+        float l = luma(src.rgb);
+        float avg = (l + luma(texture2D(uTex, vUv + vec2(uTexel.x, 0.0)).rgb)
+                       + luma(texture2D(uTex, vUv - vec2(uTexel.x, 0.0)).rgb)
+                       + luma(texture2D(uTex, vUv + vec2(0.0, uTexel.y)).rgb)
+                       + luma(texture2D(uTex, vUv - vec2(0.0, uTexel.y)).rgb)) * 0.2;
+        float hp = clamp(l - avg, -0.16, 0.16) * (0.38 * s);
+        float blackAnchor = smoothstep(0.012, 0.085, l);
+        float shadowScale = 1.0 + (0.56 * s) * exp(-l * 4.3) * blackAnchor;
+        float highScale = 1.0 - (0.27 * s) * smoothstep(0.56, 0.98, l) * (1.0 - 0.35 * (1.0 - l));
+        vec3 toned = filmic(src.rgb * (shadowScale * highScale) + vec3(hp), s);
+        float skin = step(toned.g, toned.r) * step(toned.b * 0.84, toned.g)
+                   * clamp((toned.r - toned.g) / 0.35, 0.0, 1.0)
+                   * smoothstep(0.14, 0.45, l) * (1.0 - smoothstep(0.78, 0.96, l));
+        float warmth = s * (0.018 + 0.042 * skin);
+        toned = clamp(toned + vec3(warmth, warmth * 0.56, -warmth * 0.22), 0.0, 1.0);
+        float nl = luma(toned);
+        float sat = clamp(max(toned.r, max(toned.g, toned.b)) - min(toned.r, min(toned.g, toned.b)), 0.0, 1.0);
+        float vib = 1.0 + (0.24 * s) * (1.0 - sat) * (1.0 - 0.55 * skin);
+        gl_FragColor = vec4(clamp(vec3(nl) + (toned - vec3(nl)) * vib, 0.0, 1.0), src.a);
+      }
+    `;
+
+    let glProgram, glTex, uIntensityLoc, uCompareLoc, uTexelLoc;
+    if (gl) {
+      const compile = (type, src) => { const sh = gl.createShader(type); gl.shaderSource(sh, src); gl.compileShader(sh); return sh; };
+      glProgram = gl.createProgram();
+      gl.attachShader(glProgram, compile(gl.VERTEX_SHADER, vsSrc));
+      gl.attachShader(glProgram, compile(gl.FRAGMENT_SHADER, fsSrc));
+      gl.linkProgram(glProgram);
+      gl.useProgram(glProgram);
+      const buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+      const loc = gl.getAttribLocation(glProgram, 'aPos');
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+      glTex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, glTex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      uIntensityLoc = gl.getUniformLocation(glProgram, 'uIntensity');
+      uCompareLoc = gl.getUniformLocation(glProgram, 'uCompare');
+      uTexelLoc = gl.getUniformLocation(glProgram, 'uTexel');
+    }
+
+    function renderFrame() {
+      if (!gl || !mediaType) return;
+      const src = mediaType === 'image' ? loadedBitmap : videoEl;
+      if (!src) return;
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.bindTexture(gl.TEXTURE_2D, glTex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
+      gl.uniform1f(uIntensityLoc, Number(slider.value) / 100);
+      gl.uniform1f(uCompareLoc, isComparing ? 1.0 : 0.0);
+      gl.uniform2f(uTexelLoc, 1 / canvas.width, 1 / canvas.height);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      if (mediaType === 'video' && !videoEl.paused && !videoEl.ended) {
+        rafId = requestAnimationFrame(renderFrame);
+      }
+    }
+
+    document.getElementById('btn-upload').addEventListener('click', () => {
+      mediaInput.value = '';
+      mediaInput.click();
+    });
+    document.getElementById('btn-change-media').addEventListener('click', () => {
+      mediaInput.value = '';
+      mediaInput.click();
+    });
+
+    let currentVideoUrl = null;
+
+    async function loadSafeImageSource(file) {
+      const objUrl = URL.createObjectURL(file);
+      try {
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = objUrl;
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+        if (img.decode) {
+          await img.decode().catch(() => {});
+        }
+        const rawW = img.naturalWidth || img.width;
+        const rawH = img.naturalHeight || img.height;
+        const maxTex = gl ? Math.min(2400, gl.getParameter(gl.MAX_TEXTURE_SIZE) || 2400) : 2400;
+        const scale = Math.min(1, maxTex / Math.max(rawW, rawH));
+        const targetW = Math.max(1, Math.round(rawW * scale));
+        const targetH = Math.max(1, Math.round(rawH * scale));
+
+        const offscreen = document.createElement('canvas');
+        offscreen.width = targetW;
+        offscreen.height = targetH;
+        const ctx = offscreen.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, targetW, targetH);
+        return offscreen;
+      } finally {
+        URL.revokeObjectURL(objUrl);
+      }
+    }
+
+    mediaInput.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      cancelAnimationFrame(rafId);
+      videoEl.pause();
+      if (currentVideoUrl) { URL.revokeObjectURL(currentVideoUrl); currentVideoUrl = null; }
+      document.getElementById('empty-state').style.display = 'none';
+      document.getElementById('studio-pills').classList.add('visible');
+      canvas.classList.add('visible');
+      btnExport.disabled = false;
+
+      if (file.type.startsWith('video/')) {
+        mediaType = 'video';
+        currentVideoUrl = URL.createObjectURL(file);
+        videoEl.src = currentVideoUrl;
+        await new Promise((res) => {
+          if (videoEl.readyState >= 1) return res();
+          videoEl.addEventListener('loadedmetadata', res, { once: true });
+        });
+        canvas.width = videoEl.videoWidth || 1080;
+        canvas.height = videoEl.videoHeight || 1920;
+        await videoEl.play().catch(() => {});
+        renderFrame();
+      } else {
+        mediaType = 'image';
+        loadedBitmap = await loadSafeImageSource(file);
+        canvas.width = loadedBitmap.width;
+        canvas.height = loadedBitmap.height;
+        renderFrame();
+      }
+    });
+
+    function syncLabel() {
+      sliderPct.textContent = `${slider.value}%`;
+      pillMode.textContent = isComparing ? 'BEFORE • ORIGINAL' : `SMART HDR • ${slider.value}%`;
+      pillMode.classList.toggle('comparing', isComparing);
+    }
+
+    slider.addEventListener('input', () => { syncLabel(); renderFrame(); });
+    const startCompare = () => { if (!mediaType) return; isComparing = true; btnCompare.classList.add('active'); syncLabel(); renderFrame(); };
+    const endCompare = () => { isComparing = false; btnCompare.classList.remove('active'); syncLabel(); renderFrame(); };
+    btnCompare.addEventListener('pointerdown', startCompare);
+    btnCompare.addEventListener('pointerup', endCompare);
+    btnCompare.addEventListener('pointercancel', endCompare);
+    btnCompare.addEventListener('pointerleave', endCompare);
+
+    function pickSupportedVideoMime() {
+      const candidates = [
+        'video/mp4;codecs=avc1,mp4a.40.2',
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus',
+        'video/webm'
+      ];
+      return candidates.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || '';
+    }
+
+    btnExport.addEventListener('click', async () => {
+      if (!mediaType) return;
+      document.getElementById('export-overlay').classList.add('visible');
+      await triggerExportAdWithTimeout();
+
+      if (mediaType === 'image') {
+        renderFrame();
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `GBook_HDR_${Date.now()}.jpg`;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+          }
+          finishExport();
+        }, 'image/jpeg', 0.96);
+      } else {
+        // Real-time 1.0x GPU stream export preserving original audio
+        const stream = canvas.captureStream(30);
+        const audioStream = videoEl.captureStream ? videoEl.captureStream() : (videoEl.mozCaptureStream ? videoEl.mozCaptureStream() : null);
+        if (audioStream) audioStream.getAudioTracks().forEach(t => stream.addTrack(t));
+        const mimeType = pickSupportedVideoMime();
+        const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+        const chunks = [];
+        recorder.ondataavailable = (ev) => ev.data.size && chunks.push(ev.data);
+        recorder.onstop = () => {
+          const outType = mimeType.includes('mp4') ? 'video/mp4' : 'video/webm';
+          const ext = outType === 'video/mp4' ? 'mp4' : 'webm';
+          const blob = new Blob(chunks, { type: outType });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `GBook_HDR_${Date.now()}.${ext}`;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 5000);
+          finishExport();
+        };
+        videoEl.currentTime = 0;
+        videoEl.loop = false;
+        recorder.start();
+        await videoEl.play().catch(() => {});
+        renderFrame();
+        videoEl.onended = () => { videoEl.loop = true; if (recorder.state === 'recording') recorder.stop(); };
+      }
+    });
+
+    function finishExport() {
+      document.getElementById('export-overlay').classList.remove('visible');
+      const toast = document.getElementById('toast-pill');
+      toast.classList.add('visible');
+      setTimeout(() => toast.classList.remove('visible'), 2500);
+    }
+  </script>
+</body>
+</html>

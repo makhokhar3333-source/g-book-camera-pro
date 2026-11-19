@@ -1,0 +1,21 @@
+{
+  "name": "g-book-camera",
+  "version": "1.0.0",
+  "description": "G-Book Camera - iPhone 18 Pro Max Smart HDR Photo & Video Studio",
+  "private": true,
+  "scripts": {
+    "cap:sync": "npx cap sync android",
+    "cap:open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor-community/admob": "^6.2.0",
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/local-notifications": "^6.1.0",
+    "mp4-muxer": "^5.1.4"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.2.0"
+  }
+}

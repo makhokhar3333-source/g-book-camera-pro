@@ -1,0 +1,6 @@
+{
+  "name": "G-Book Camera",
+  "description": "Flagship iPhone 18 Pro Max Smart HDR photo and video enhancement studio with GPU acceleration, scheduled reminders, and AdMob integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
