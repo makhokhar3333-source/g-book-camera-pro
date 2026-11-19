@@ -61,8 +61,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val connectivityMonitor = ConnectivityMonitor(appContext)
     val adMobManager = AdMobManager(appContext)
 
+    private val alreadyAllowedNotifications =
+        DailyNotificationScheduler.isSchedulingEnabled(appContext)
+
     private val _uiState = MutableStateFlow(
-        GBookUiState(isOnline = connectivityMonitor.isOnline.value)
+        GBookUiState(
+            currentScreen = if (alreadyAllowedNotifications) {
+                AppScreen.Welcome
+            } else {
+                AppScreen.NotificationGate
+            },
+            isOnline = connectivityMonitor.isOnline.value
+        )
     )
     val uiState: StateFlow<GBookUiState> = _uiState.asStateFlow()
 
@@ -73,6 +83,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var hasSyncedOtaThisSession = false
 
     init {
+        if (alreadyAllowedNotifications) {
+            DailyNotificationScheduler.scheduleAllDailyNotifications(appContext)
+        }
         // Initialize AdMob immediately on app launch and pre-load all 3 tiers
         adMobManager.initializeAndPreload()
 
