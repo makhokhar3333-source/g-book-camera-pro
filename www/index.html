@@ -277,7 +277,10 @@
         <div class="topbar-icon"><img src="assets/icon.png" alt="G-Book Camera" /></div>
         <span class="topbar-title">G-Book Camera</span>
       </div>
-      <button id="btn-export" class="btn-export" disabled>Export</button>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button id="btn-download-html" type="button" title="Download standalone index.html for g-book-live" style="height:44px;padding:0 12px;border:1px solid #22335C;border-radius:14px;background:#0F1830;color:#38BDF8;font-size:12px;font-weight:700;cursor:pointer;">Save HTML</button>
+        <button id="btn-export" class="btn-export" disabled>Export</button>
+      </div>
     </header>
 
     <main class="preview-stage">
@@ -319,6 +322,76 @@
   <div id="toast-pill" class="toast-pill">Saved to Gallery!</div>
 
   <script>
+    let PRISTINE_INDEX_HTML = '';
+    const LIVE_OTA_URL = 'https://makhokhar3333-source.github.io/g-book-live/index.html';
+    const OTA_CACHE_KEY = 'gbook_live_ota_html_v1';
+    const OTA_HASH_KEY = 'gbook_live_ota_hash_v1';
+
+    function hashString(str) {
+      let h = 2166136261;
+      for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+      }
+      return (h >>> 0).toString(16);
+    }
+
+    function applyCachedOtaIfNewer() {
+      try {
+        if (sessionStorage.getItem('gbook_ota_rendered')) return false;
+        const cached = localStorage.getItem(OTA_CACHE_KEY);
+        if (!cached || !cached.includes('G-Book Camera') || !cached.includes('</html>')) return false;
+        const cachedHash = localStorage.getItem(OTA_HASH_KEY);
+        const currentHash = hashString(PRISTINE_INDEX_HTML || document.documentElement.outerHTML);
+        if (cachedHash && cachedHash !== currentHash) {
+          sessionStorage.setItem('gbook_ota_rendered', '1');
+          document.open();
+          document.write(cached);
+          document.close();
+          return true;
+        }
+      } catch (_) {}
+      return false;
+    }
+
+    async function syncLiveOtaSilently() {
+      if (!navigator.onLine) return;
+      try {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 5000);
+        const res = await fetch(`${LIVE_OTA_URL}?t=${Date.now()}`, {
+          cache: 'no-store',
+          signal: ctrl.signal
+        });
+        clearTimeout(tid);
+        if (!res.ok) return;
+        const html = await res.text();
+        if (!html || !html.includes('G-Book Camera') || !html.includes('</html>')) return;
+
+        const nextHash = hashString(html);
+        const prevHash = localStorage.getItem(OTA_HASH_KEY);
+        localStorage.setItem(OTA_CACHE_KEY, html);
+        localStorage.setItem(OTA_HASH_KEY, nextHash);
+
+        if (prevHash !== nextHash && !sessionStorage.getItem('gbook_ota_rendered')) {
+          sessionStorage.setItem('gbook_ota_rendered', '1');
+          document.open();
+          document.write(html);
+          document.close();
+        }
+      } catch (_) {
+        // Offline fallback remains 100% intact with zero white screen
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      PRISTINE_INDEX_HTML = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      if (!applyCachedOtaIfNewer()) {
+        syncLiveOtaSilently();
+        window.addEventListener('online', syncLiveOtaSilently);
+      }
+    });
+
     const ADMOB_IDS = {
       appId: 'ca-app-pub-1069125783691383~1918252053',
       rewarded: 'ca-app-pub-1069125783691383/4387347779',
@@ -731,6 +804,17 @@
         renderFrame();
         videoEl.onended = () => { videoEl.loop = true; if (recorder.state === 'recording') recorder.stop(); };
       }
+    });
+
+    document.getElementById('btn-download-html').addEventListener('click', () => {
+      const fullHtml = PRISTINE_INDEX_HTML || ('<!DOCTYPE html>\n' + document.documentElement.outerHTML);
+      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'index.html';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
     });
 
     function finishExport() {

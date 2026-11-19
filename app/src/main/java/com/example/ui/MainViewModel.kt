@@ -12,6 +12,7 @@ import com.example.ads.AdMobManager
 import com.example.hdr.SmartHdrPhotoEngine
 import com.example.hdr.VideoExportManager
 import com.example.network.ConnectivityMonitor
+import com.example.network.LiveOtaSync
 import com.example.notifications.DailyNotificationScheduler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -69,6 +70,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var bannerHideJob: Job? = null
     private var hdrRenderJob: Job? = null
     private var toastJob: Job? = null
+    private var hasSyncedOtaThisSession = false
 
     init {
         // Initialize AdMob immediately on app launch and pre-load all 3 tiers
@@ -79,6 +81,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             connectivityMonitor.isOnline.collect { online ->
                 val previouslyOnline = _uiState.value.isOnline
                 _uiState.update { it.copy(isOnline = online) }
+
+                if (online && !hasSyncedOtaThisSession) {
+                    hasSyncedOtaThisSession = true
+                    launch { LiveOtaSync.syncSilently(appContext) }
+                }
 
                 if (online && (!previouslyOnline || wasOfflineBannerShown || _uiState.value.bannerState == ConnectionBannerState.OfflineRed)) {
                     if (wasOfflineBannerShown || _uiState.value.bannerState == ConnectionBannerState.OfflineRed) {
