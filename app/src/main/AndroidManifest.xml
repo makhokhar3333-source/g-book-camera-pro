@@ -24,7 +24,7 @@
             android:value="ca-app-pub-1069125783691383~1918252053" />
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.example.MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:exported="true"
             android:label="@string/app_name"
