@@ -24,7 +24,7 @@ class ExampleRobolectricTest {
     fun `app name and package configuration are correct`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         assertEquals("G-Book Camera", context.getString(R.string.app_name))
-        assertEquals("com.gbookcamera.app", context.packageName)
+        assertEquals("com.gbookcamera.pro", context.packageName)
     }
 
     @Test

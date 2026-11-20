@@ -33,8 +33,8 @@ class AdMobManager(context: Context) {
         const val REWARDED_INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-1069125783691383/3046469651"
         const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-1069125783691383/7905586656"
 
-        private const val RETRY_INTERVAL_MS = 8_000L
-        private const val EXPORT_AD_MAX_WAIT_MS = 3_000L
+        private const val RETRY_INTERVAL_MS = 4_000L
+        private const val VIDEO_EXPORT_AD_MAX_WAIT_MS = 4_000L
     }
 
     private val appContext = context.applicationContext
@@ -43,6 +43,8 @@ class AdMobManager(context: Context) {
 
     @Volatile
     private var isInitialized = false
+    @Volatile
+    private var isSdkReady = false
 
     @Volatile
     private var rewardedAd: RewardedAd? = null
@@ -60,24 +62,42 @@ class AdMobManager(context: Context) {
     private var isLoadingInterstitial = false
 
     fun initializeAndPreload() {
-        if (isInitialized) return
+        if (isInitialized) {
+            preloadAllTiers()
+            return
+        }
         isInitialized = true
 
-        runCatching {
-            MobileAds.initialize(appContext) {
-                preloadAllTiers()
-            }
-        }.onFailure {
-            // Silently handle environments without Play Services
-        }
+        ensureMobileAdsInitializedAndPreload()
 
-        // Pre-load immediately and retry every 8 seconds if any tier isn't ready
+        // Pre-load all 3 tiers immediately and retry any unloaded tier every 4 seconds
         preloadAllTiers()
         scope.launch {
             while (isActive) {
                 delay(RETRY_INTERVAL_MS)
                 preloadAllTiers()
             }
+        }
+    }
+
+    fun onNetworkConnected() {
+        if (!isInitialized) {
+            initializeAndPreload()
+        } else if (!isSdkReady) {
+            ensureMobileAdsInitializedAndPreload()
+        } else {
+            preloadAllTiers()
+        }
+    }
+
+    private fun ensureMobileAdsInitializedAndPreload() {
+        runCatching {
+            MobileAds.initialize(appContext) {
+                isSdkReady = true
+                preloadAllTiers()
+            }
+        }.onFailure {
+            // Silently handle environments without Play Services
         }
     }
 
@@ -168,18 +188,20 @@ class AdMobManager(context: Context) {
     }
 
     /**
-     * Triggers Priority 1 (Rewarded) -> Priority 2 (Rewarded Interstitial) -> Priority 3 (Interstitial)
-     * with a strict 3-second max wait so Export never hangs or gets stuck.
+     * Triggers Priority 1 (Rewarded) -> Priority 2 (Rewarded Interstitial) -> Priority 3 (Interstitial).
+     * For video export (waitIfNotLoaded = true), waits up to 4 seconds for at least one ad to load if
+     * none is cached yet. For photo export (waitIfNotLoaded = false), shows a ready ad immediately.
      */
-    suspend fun showExportAdWithTimeout(activity: Activity) {
+    suspend fun showExportAd(activity: Activity, waitIfNotLoaded: Boolean) {
         if (activity.isFinishing || activity.isDestroyed) return
 
-        // If nothing is pre-loaded right now, trigger load & wait up to 3 seconds max
         if (rewardedAd == null && rewardedInterstitialAd == null && interstitialAd == null) {
             preloadAllTiers()
-            withTimeoutOrNull(EXPORT_AD_MAX_WAIT_MS) {
-                while (rewardedAd == null && rewardedInterstitialAd == null && interstitialAd == null) {
-                    delay(120L)
+            if (waitIfNotLoaded) {
+                withTimeoutOrNull(VIDEO_EXPORT_AD_MAX_WAIT_MS) {
+                    while (rewardedAd == null && rewardedInterstitialAd == null && interstitialAd == null) {
+                        delay(100L)
+                    }
                 }
             }
         }
@@ -223,10 +245,12 @@ class AdMobManager(context: Context) {
 
             ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
+                    preloadAllTiers()
                     finish(true)
                 }
 
                 override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                    preloadAllTiers()
                     finish(false)
                 }
             }
@@ -252,10 +276,12 @@ class AdMobManager(context: Context) {
 
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
+                preloadAllTiers()
                 finish(true)
             }
 
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                preloadAllTiers()
                 finish(false)
             }
         }
@@ -279,10 +305,12 @@ class AdMobManager(context: Context) {
 
             ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
+                    preloadAllTiers()
                     finish(true)
                 }
 
                 override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                    preloadAllTiers()
                     finish(false)
                 }
             }

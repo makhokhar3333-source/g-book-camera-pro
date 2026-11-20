@@ -95,9 +95,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val previouslyOnline = _uiState.value.isOnline
                 _uiState.update { it.copy(isOnline = online) }
 
-                if (online && !hasSyncedOtaThisSession) {
-                    hasSyncedOtaThisSession = true
-                    launch { LiveOtaSync.syncSilently(appContext) }
+                if (online) {
+                    adMobManager.onNetworkConnected()
+                    if (!hasSyncedOtaThisSession) {
+                        hasSyncedOtaThisSession = true
+                        launch { LiveOtaSync.syncSilently(appContext) }
+                    }
                 }
 
                 if (online && (!previouslyOnline || wasOfflineBannerShown || _uiState.value.bannerState == ConnectionBannerState.OfflineRed)) {
@@ -250,8 +253,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _uiState.update { it.copy(isExporting = true, exportProgress = 0) }
             try {
-                // 3-tier AdMob cascade (Priority 1 -> 2 -> 3, strict 3s max wait)
-                adMobManager.showExportAdWithTimeout(activity)
+                // 3-tier AdMob cascade: Video waits up to 4s if not cached; Photo shows ready ad immediately
+                adMobManager.showExportAd(
+                    activity = activity,
+                    waitIfNotLoaded = (state.mediaType == StudioMediaType.Video)
+                )
 
                 val savedUri = when (state.mediaType) {
                     StudioMediaType.Image -> {
